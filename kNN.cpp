@@ -246,21 +246,27 @@ bool Dataset::loadFromCSV(const char *fileName)
 
 void Dataset::printHead(int nRows, int nCols) const
 {
+    // Check if nRows or nCols is less than 0
+    if (nRows < 0 || nCols < 0)
+        return;
+
+    // Print column names
     for (int col = 0; col < nCols && col < columnNames->length(); ++col)
     {
         if (col > 0)
-            cout << ", ";
+            cout << " ";
         cout << columnNames->get(col);
     }
     cout << endl;
 
+    // Print data rows
     for (int row = 0; row < nRows && row < data->length(); ++row)
     {
         List<int> *rowData = data->get(row);
         for (int col = 0; col < nCols && col < rowData->length(); ++col)
         {
             if (col > 0)
-                cout << ", ";
+                cout << " ";
             cout << rowData->get(col);
         }
         cout << endl;
@@ -269,15 +275,37 @@ void Dataset::printHead(int nRows, int nCols) const
 
 void Dataset::printTail(int nRows, int nCols) const
 {
-    int startRow = max(0, data->length() - nRows);
-    for (int row = startRow; row < data->length(); ++row)
+    if (nRows < 0 || nCols < 0)
+        return;
+
+    int totalRows = data->length();
+    int totalCols = columnNames->length();
+
+    // If nRows or nCols are greater than dataset size, adjust them accordingly
+    nRows = min(nRows, totalRows);
+    nCols = min(nCols, totalCols);
+
+    // Calculate the starting row index for printing
+    int startRow = max(0, totalRows - nRows);
+
+    // Print column names
+    for (int col = max(0, totalCols - nCols); col < totalCols; ++col)
+    {
+        cout << columnNames->get(col);
+        if (col < totalCols - 1)
+            cout << " ";
+    }
+    cout << endl;
+
+    // Print data rows
+    for (int row = startRow; row < totalRows; ++row)
     {
         List<int> *rowData = data->get(row);
-        for (int col = 0; col < nCols && col < rowData->length(); ++col)
+        for (int col = max(0, rowData->length() - nCols); col < rowData->length(); ++col)
         {
-            if (col > 0)
-                cout << ", ";
             cout << rowData->get(col);
+            if (col < rowData->length() - 1)
+                cout << " ";
         }
         cout << endl;
     }

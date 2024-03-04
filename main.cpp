@@ -22,6 +22,7 @@ void tc1(){
 }
 
 int main() {
+    cout << "Starting =====------------------" << endl;
     tc1();
     return 0;
 }
