@@ -47,7 +47,7 @@ public:
 
     virtual void insert(int index, T value) override {
         if (index < 0 || index > static_cast<int>(size)) {
-            throw out_of_range("Index out of range");
+            throw std::out_of_range("Index out of range");
         }
         if (size == capacity) {
             expandCapacity();
@@ -61,7 +61,7 @@ public:
 
     virtual void remove(int index) override {
         if (index < 0 || index >= static_cast<int>(size)) {
-            throw out_of_range("Index out of range");
+            throw std::out_of_range("Index out of range");
         }
         for (size_t i = index; i < size - 1; ++i) {
             array[i] = array[i + 1];
@@ -71,7 +71,7 @@ public:
 
     virtual T& get(int index) const override {
         if (index < 0 || index >= static_cast<int>(size)) {
-            throw out_of_range("Index out of range");
+            throw std::out_of_range("Index out of range");
         }
         return array[index];
     }
@@ -105,52 +105,70 @@ public:
 
 
 
-class Dataset {
-private:
-    List<List<int>*>* data;
-    List<string>* columnNames;
 
-public:
-    Dataset() : data(new DynamicArrayList<List<int>*>()), columnNames(new DynamicArrayList<string>()) {}
 
-    ~Dataset() {
-        for (int i = 0; i < data->length(); ++i) {
-            delete data->get(i);
-        }
-        delete data;
-        delete columnNames;
-    }
-
-    Dataset(const Dataset& other) : Dataset() {
-        *this = other;
-    }
-
-    Dataset& operator=(const Dataset& other) {
-        if (this != &other) {
+    void Dataset::clearData() {
+        if (data) {
             for (int i = 0; i < data->length(); ++i) {
                 delete data->get(i);
             }
-            data->clear();
-            columnNames->clear();
+            delete data;
+            data = nullptr; // Ensure the pointer is set to nullptr after deletion.
+        }
+    }
 
+    Dataset::Dataset() : data(new DynamicArrayList<List<int>*>()), columnNames(new DynamicArrayList<string>()) {}
+
+    Dataset::~Dataset() {
+        clearData();
+        delete columnNames;
+    }
+
+    Dataset::Dataset(const Dataset& other) : data(new DynamicArrayList<List<int>*>()), columnNames(new DynamicArrayList<string>()) {
+        for (int i = 0; i < other.data->length(); ++i) {
+            List<int>* newRow = new DynamicArrayList<int>();
+            for (int j = 0; j < other.data->get(i)->length(); ++j) {
+                newRow->push_back(other.data->get(i)->get(j));
+            }
+            data->push_back(newRow);
+        }
+
+        for (int i = 0; i < other.columnNames->length(); ++i) {
+            columnNames->push_back(other.columnNames->get(i));
+        }
+    }
+
+    // Assignment operator
+    Dataset& Dataset::operator=(const Dataset& other) {
+        if (this != &other) {
+            // Create new data structures as a local copy.
+            List<List<int>*>* newData = new DynamicArrayList<List<int>*>();
+            List<string>* newColumnNames = new DynamicArrayList<string>();
+
+            // Attempt to copy the data.
             for (int i = 0; i < other.data->length(); ++i) {
                 List<int>* newRow = new DynamicArrayList<int>();
-                List<int>* otherRow = other.data->get(i);
-                for (int j = 0; j < otherRow->length(); ++j) {
-                    newRow->push_back(otherRow->get(j));
+                for (int j = 0; j < other.data->get(i)->length(); ++j) {
+                    newRow->push_back(other.data->get(i)->get(j));
                 }
-                data->push_back(newRow);
+                newData->push_back(newRow);
+            }
+            for (int i = 0; i < other.columnNames->length(); ++i) {
+                newColumnNames->push_back(other.columnNames->get(i));
             }
 
-            for (int i = 0; i < other.columnNames->length(); ++i) {
-                columnNames->push_back(other.columnNames->get(i));
-            }
+            // Delete the old data and assign the new data.
+            clearData();
+            delete columnNames;
+            
+            data = newData;
+            columnNames = newColumnNames;
         }
         return *this;
     }
 
-    bool loadFromCSV(const char* fileName) {
-        ifstream file(fileName);
+    bool Dataset::loadFromCSV(const char* fileName) {
+        std::ifstream file(fileName);
         if (!file.is_open()) {
             return false;
         }
@@ -158,7 +176,7 @@ public:
         string line;
         // Read the column names
         if (getline(file, line)) {
-            istringstream sstream(line);
+            std::istringstream sstream(line);
             string columnName;
             while (getline(sstream, columnName, ',')) {
                 columnNames->push_back(columnName);
@@ -169,7 +187,7 @@ public:
 
         // Read the data
         while (getline(file, line)) {
-            istringstream sstream(line);
+            std::istringstream sstream(line);
             string cell;
             List<int>* row = new DynamicArrayList<int>();
             
@@ -185,7 +203,7 @@ public:
 
     // Other methods inside the Dataset class:
 
-    void printHead(int nRows = 5, int nCols = 5) const {
+    void Dataset::printHead(int nRows, int nCols) const {
         for (int col = 0; col < nCols && col < columnNames->length(); ++col) {
             if (col > 0) cout << ", ";
             cout << columnNames->get(col);
@@ -202,7 +220,7 @@ public:
         }
     }
 
-    void printTail(int nRows = 5, int nCols = 5) const {
+    void Dataset::printTail(int nRows, int nCols) const {
         int startRow = max(0, data->length() - nRows);
         for (int row = startRow; row < data->length(); ++row) {
             List<int>* rowData = data->get(row);
@@ -214,12 +232,12 @@ public:
         }
     }
 
-    void getShape(int& nRows, int& nCols) const {
+    void Dataset::getShape(int& nRows, int& nCols) const {
         nRows = data->length();
         nCols = data->length() > 0 ? data->get(0)->length() : 0;
     }
 
-    void columns() const {
+    void Dataset::columns() const {
         for (int i = 0; i < columnNames->length(); ++i) {
             if (i > 0) cout << ", ";
             cout << columnNames->get(i);
@@ -227,7 +245,7 @@ public:
         cout << endl;
     }
 
-    bool drop(int axis = 0, int index = 0, string columns = "") {
+    bool Dataset::drop(int axis, int index, string columns) {
         if (axis == 0) {
             if (index < 0 || index >= data->length()) {
                 return false;
@@ -256,12 +274,14 @@ public:
         return true;
     }
 
-    Dataset extract(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1) const {
-        if (endRow == -1) {
-            endRow = data->length();
-        }
-        if (endCol == -1) {
-            endCol = data->get(0)->length();
+    Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) const {
+    // Adjust endRow and endCol to the length of the dataset if they are negative
+        endRow = (endRow == -1) ? data->length() : endRow;
+        endCol = (endCol == -1) ? (data->length() > 0 ? data->get(0)->length() : 0) : endCol;
+
+        // Check if the specified ranges are within the valid range of the dataset dimensions
+        if (startRow < 0 || startCol < 0 || endRow > data->length() || endCol > (data->length() > 0 ? data->get(0)->length() : 0)) {
+            throw std::out_of_range("Specified range is out of the dataset dimensions");
         }
 
         Dataset extractedDataset;
@@ -279,16 +299,16 @@ public:
         }
 
         return extractedDataset;
-    }
+}
 
 
-    int length() const {
+    int Dataset::length() const {
         return data->length();
     }
 
     // Returns the number of features (columns) in each item
     // Assuming all rows have the same number of columns
-    int width() const {
+    int Dataset::width() const {
         if (length() > 0) {
             return data->get(0)->length();
         }
@@ -296,12 +316,12 @@ public:
     }
 
     // Returns the pointer to the data array at the given index (row)
-    List<int>* get(int index) const {
+    List<int>* Dataset::get(int index) const {
         return data->get(index);
     }
 
     // Adds a new row to the dataset with the given data and size
-    void add(List<int>* rowData) {
+    void Dataset::add(List<int>* rowData) {
         List<int>* newRow = new DynamicArrayList<int>(); // Assuming DynamicArrayList is a concrete implementation of List
         for (int i = 0; i < rowData->length(); ++i) {
             newRow->push_back(rowData->get(i));
@@ -310,14 +330,14 @@ public:
 }
 
     // Adds a new label to the dataset (for y_train and y_test)
-    void add(int label) {
+    void Dataset::add(int label) {
         List<int>* newRow = new DynamicArrayList<int>();
         newRow->push_back(label);
         data->push_back(newRow);
     }
 
     // Returns the maximum label value; used to create the count array for label frequencies
-    int max_label() const {
+    int Dataset::max_label() const {
         int maxLabel = -1;
         for (int i = 0; i < length(); ++i) {
             List<int>* row = get(i);
@@ -327,7 +347,7 @@ public:
         }
         return maxLabel;
     }
-};
+
 
 
 double euclideanDistance(const List<int>* a, const List<int>* b, int size) {
@@ -336,24 +356,17 @@ double euclideanDistance(const List<int>* a, const List<int>* b, int size) {
         int diff = a->get(i) - b->get(i);
         distance += diff * diff;
     }
-    return sqrt(distance);
+    return std::sqrt(distance);
 }
 
-class kNN {
-private:
-    int k;
-    Dataset X_train;
-    Dataset y_train;
+    kNN::kNN(int k) : k(k) {}
 
-public:
-    kNN(int k = 5) : k(k) {}
-
-    void fit(const Dataset& X_train, const Dataset& y_train) {
+    void kNN::fit(const Dataset& X_train, const Dataset& y_train) {
         this->X_train = X_train;
         this->y_train = y_train;
     }
 
-    Dataset predict(const Dataset& X_test) {
+    Dataset kNN::predict(const Dataset& X_test) {
         Dataset predictions;
 
         for (int i = 0; i < X_test.length(); ++i) {
@@ -403,16 +416,17 @@ public:
         return predictions;
     }
 
-    double score(const Dataset& y_test, const Dataset& y_pred) {
-        int correctPredictions = 0;
-        for (int i = 0; i < y_test.length(); ++i) {
-            if (y_test.get(i) == y_pred.get(i)) {
-                correctPredictions++;
-            }
+    double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
+    int correctPredictions = 0;
+    for (int i = 0; i < y_test.length(); ++i) {
+        // Compare the values instead of pointers
+        if (y_test.get(i)->get(0) == y_pred.get(i)->get(0)) {
+            correctPredictions++;
         }
-        return static_cast<double>(correctPredictions) / y_test.length();
     }
-};
+    return static_cast<double>(correctPredictions) / y_test.length();
+}
+
 
 void train_test_split(Dataset& X, Dataset& y, double test_size, 
                       Dataset& X_train, Dataset& X_test, Dataset& y_train, Dataset& y_test) {

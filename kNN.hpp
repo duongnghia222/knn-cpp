@@ -23,6 +23,7 @@ class Dataset {
 private:
     List<List<int>*>* data;
     List<string>* columnNames;
+    void clearData();
     //You may need to define more
 public:
     Dataset();
@@ -36,12 +37,21 @@ public:
     void columns() const;
     bool drop(int axis = 0, int index = 0, std::string columns = "");
     Dataset extract(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1) const;
+    int length() const;
+    int width() const;
+    List<int>* get(int index) const;
+    void add(List<int>* rowData);
+    void add(int label);
+    int max_label() const;
+
 };
 
 class kNN {
 private:
     int k;
-    
+    Dataset X_train;
+    Dataset y_train;
+
     //You may need to define more
 public:
     kNN(int k = 5);
@@ -53,6 +63,7 @@ public:
 void train_test_split(Dataset& X, Dataset& y, double test_size, 
                         Dataset& X_train, Dataset& X_test, Dataset& y_train, Dataset& y_test);
 
+double euclideanDistance(const List<int>* a, const List<int>* b, int size);
 // Please add more or modify as needed
 
 
