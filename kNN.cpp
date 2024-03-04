@@ -47,7 +47,7 @@ public:
 
     virtual void insert(int index, T value) override {
         if (index < 0 || index > static_cast<int>(size)) {
-            throw std::out_of_range("Index out of range");
+            throw out_of_range("Index out of range");
         }
         if (size == capacity) {
             expandCapacity();
@@ -61,7 +61,7 @@ public:
 
     virtual void remove(int index) override {
         if (index < 0 || index >= static_cast<int>(size)) {
-            throw std::out_of_range("Index out of range");
+            throw out_of_range("Index out of range");
         }
         for (size_t i = index; i < size - 1; ++i) {
             array[i] = array[i + 1];
@@ -71,7 +71,7 @@ public:
 
     virtual T& get(int index) const override {
         if (index < 0 || index >= static_cast<int>(size)) {
-            throw std::out_of_range("Index out of range");
+            throw out_of_range("Index out of range");
         }
         return array[index];
     }
@@ -89,9 +89,9 @@ public:
 
     virtual void print() const override {
         for (size_t i = 0; i < size; ++i) {
-            std::cout << array[i] << ' ';
+            cout << array[i] << ' ';
         }
-        std::cout << std::endl;
+        cout << endl;
     }
 
     virtual void reverse() override {
@@ -108,10 +108,10 @@ public:
 class Dataset {
 private:
     List<List<int>*>* data;
-    List<std::string>* columnNames;
+    List<string>* columnNames;
 
 public:
-    Dataset() : data(new DynamicArrayList<List<int>*>()), columnNames(new DynamicArrayList<std::string>()) {}
+    Dataset() : data(new DynamicArrayList<List<int>*>()), columnNames(new DynamicArrayList<string>()) {}
 
     ~Dataset() {
         for (int i = 0; i < data->length(); ++i) {
@@ -150,16 +150,16 @@ public:
     }
 
     bool loadFromCSV(const char* fileName) {
-        std::ifstream file(fileName);
+        ifstream file(fileName);
         if (!file.is_open()) {
             return false;
         }
 
-        std::string line;
+        string line;
         // Read the column names
         if (getline(file, line)) {
-            std::istringstream sstream(line);
-            std::string columnName;
+            istringstream sstream(line);
+            string columnName;
             while (getline(sstream, columnName, ',')) {
                 columnNames->push_back(columnName);
             }
@@ -169,12 +169,12 @@ public:
 
         // Read the data
         while (getline(file, line)) {
-            std::istringstream sstream(line);
-            std::string cell;
+            istringstream sstream(line);
+            string cell;
             List<int>* row = new DynamicArrayList<int>();
             
             while (getline(sstream, cell, ',')) {
-                row->push_back(std::atoi(cell.c_str()));
+                row->push_back(atoi(cell.c_str()));
             }
             data->push_back(row);
         }
@@ -187,30 +187,30 @@ public:
 
     void printHead(int nRows = 5, int nCols = 5) const {
         for (int col = 0; col < nCols && col < columnNames->length(); ++col) {
-            if (col > 0) std::cout << ", ";
-            std::cout << columnNames->get(col);
+            if (col > 0) cout << ", ";
+            cout << columnNames->get(col);
         }
-        std::cout << std::endl;
+        cout << endl;
 
         for (int row = 0; row < nRows && row < data->length(); ++row) {
             List<int>* rowData = data->get(row);
             for (int col = 0; col < nCols && col < rowData->length(); ++col) {
-                if (col > 0) std::cout << ", ";
-                std::cout << rowData->get(col);
+                if (col > 0) cout << ", ";
+                cout << rowData->get(col);
             }
-            std::cout << std::endl;
+            cout << endl;
         }
     }
 
     void printTail(int nRows = 5, int nCols = 5) const {
-        int startRow = std::max(0, data->length() - nRows);
+        int startRow = max(0, data->length() - nRows);
         for (int row = startRow; row < data->length(); ++row) {
             List<int>* rowData = data->get(row);
             for (int col = 0; col < nCols && col < rowData->length(); ++col) {
-                if (col > 0) std::cout << ", ";
-                std::cout << rowData->get(col);
+                if (col > 0) cout << ", ";
+                cout << rowData->get(col);
             }
-            std::cout << std::endl;
+            cout << endl;
         }
     }
 
@@ -221,13 +221,13 @@ public:
 
     void columns() const {
         for (int i = 0; i < columnNames->length(); ++i) {
-            if (i > 0) std::cout << ", ";
-            std::cout << columnNames->get(i);
+            if (i > 0) cout << ", ";
+            cout << columnNames->get(i);
         }
-        std::cout << std::endl;
+        cout << endl;
     }
 
-    bool drop(int axis = 0, int index = 0, std::string columns = "") {
+    bool drop(int axis = 0, int index = 0, string columns = "") {
         if (axis == 0) {
             if (index < 0 || index >= data->length()) {
                 return false;
@@ -280,6 +280,152 @@ public:
 
         return extractedDataset;
     }
+
+
+    int length() const {
+        return data->length();
+    }
+
+    // Returns the number of features (columns) in each item
+    // Assuming all rows have the same number of columns
+    int width() const {
+        if (length() > 0) {
+            return data->get(0)->length();
+        }
+        return 0;
+    }
+
+    // Returns the pointer to the data array at the given index (row)
+    List<int>* get(int index) const {
+        return data->get(index);
+    }
+
+    // Adds a new row to the dataset with the given data and size
+    void add(List<int>* rowData) {
+        List<int>* newRow = new DynamicArrayList<int>(); // Assuming DynamicArrayList is a concrete implementation of List
+        for (int i = 0; i < rowData->length(); ++i) {
+            newRow->push_back(rowData->get(i));
+        }
+        data->push_back(newRow);
+}
+
+    // Adds a new label to the dataset (for y_train and y_test)
+    void add(int label) {
+        List<int>* newRow = new DynamicArrayList<int>();
+        newRow->push_back(label);
+        data->push_back(newRow);
+    }
+
+    // Returns the maximum label value; used to create the count array for label frequencies
+    int max_label() const {
+        int maxLabel = -1;
+        for (int i = 0; i < length(); ++i) {
+            List<int>* row = get(i);
+            if (row->length() > 0 && row->get(0) > maxLabel) {
+                maxLabel = row->get(0);
+            }
+        }
+        return maxLabel;
+    }
 };
 
 
+double euclideanDistance(const List<int>* a, const List<int>* b, int size) {
+    double distance = 0.0;
+    for (int i = 0; i < size; ++i) {
+        int diff = a->get(i) - b->get(i);
+        distance += diff * diff;
+    }
+    return sqrt(distance);
+}
+
+class kNN {
+private:
+    int k;
+    Dataset X_train;
+    Dataset y_train;
+
+public:
+    kNN(int k = 5) : k(k) {}
+
+    void fit(const Dataset& X_train, const Dataset& y_train) {
+        this->X_train = X_train;
+        this->y_train = y_train;
+    }
+
+    Dataset predict(const Dataset& X_test) {
+        Dataset predictions;
+
+        for (int i = 0; i < X_test.length(); ++i) {
+            double* distances = new double[X_train.length()];
+            int* indices = new int[X_train.length()];
+
+            for (int j = 0; j < X_train.length(); ++j) {
+                distances[j] = euclideanDistance(X_test.get(i), X_train.get(j), X_train.width());
+                indices[j] = j;
+            }
+
+            // Simple selection sort to find the k smallest distances
+            for (int j = 0; j < k; ++j) {
+                int minIndex = j;
+                for (int l = j + 1; l < X_train.length(); ++l) {
+                    if (distances[l] < distances[minIndex]) {
+                        minIndex = l;
+                    }
+                }
+                swap(distances[j], distances[minIndex]);
+                swap(indices[j], indices[minIndex]);
+            }
+
+            // Majority voting for the nearest k neighbors
+            int* count = new int[y_train.max_label() + 1](); // Assuming labels are 0-indexed
+            for (int j = 0; j < k; ++j) {
+                int label = y_train.get(indices[j])->get(0);
+                count[label]++;
+            }
+
+            int maxCount = 0;
+            int predictedLabel = -1;
+            for (int j = 0; j <= y_train.max_label(); ++j) {
+                if (count[j] > maxCount) {
+                    maxCount = count[j];
+                    predictedLabel = j;
+                }
+            }
+
+            predictions.add(predictedLabel);
+
+            delete[] distances;
+            delete[] indices;
+            delete[] count;
+        }
+
+        return predictions;
+    }
+
+    double score(const Dataset& y_test, const Dataset& y_pred) {
+        int correctPredictions = 0;
+        for (int i = 0; i < y_test.length(); ++i) {
+            if (y_test.get(i) == y_pred.get(i)) {
+                correctPredictions++;
+            }
+        }
+        return static_cast<double>(correctPredictions) / y_test.length();
+    }
+};
+
+void train_test_split(Dataset& X, Dataset& y, double test_size, 
+                      Dataset& X_train, Dataset& X_test, Dataset& y_train, Dataset& y_test) {
+    int totalRows = X.length();
+    int trainRows = static_cast<int>((1 - test_size) * totalRows);
+    int testRows = totalRows - trainRows;
+
+    for (int i = 0; i < trainRows; ++i) {
+        X_train.add(X.get(i));
+        y_train.add(y.get(i));
+    }
+    for (int i = trainRows; i < totalRows; ++i) {
+        X_test.add(X.get(i));
+        y_test.add(y.get(i));
+    }
+}

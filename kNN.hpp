@@ -41,9 +41,6 @@ public:
 class kNN {
 private:
     int k;
-    Dataset* trainingData;
-    double calculateDistance(const List<int>* instance1, const List<int>* instance2);
-    int findMajorityClass(const List<std::pair<double, int>>& neighbors);
     
     //You may need to define more
 public:
