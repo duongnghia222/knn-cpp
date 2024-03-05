@@ -58,7 +58,7 @@ public:
     {
         if (index < 0 || index > static_cast<int>(size))
         {
-            throw std::out_of_range("Index out of range");
+            cout << ("Index out of range");
         }
         if (size == capacity)
         {
@@ -76,7 +76,7 @@ public:
     {
         if (index < 0 || index >= static_cast<int>(size))
         {
-            throw std::out_of_range("Index out of range");
+            cout << ("Index out of range");
         }
         for (size_t i = index; i < size - 1; ++i)
         {
@@ -89,7 +89,7 @@ public:
     {
         if (index < 0 || index >= static_cast<int>(size))
         {
-            throw std::out_of_range("Index out of range");
+            cout << ("Index out of range");
         }
         return array[index];
     }
@@ -136,7 +136,7 @@ void Dataset::clearData()
             delete data->get(i);
         }
         delete data;
-        data = nullptr; // Ensure the pointer is set to nullptr after deletion.
+        data = nullptr; 
     }
 }
 
@@ -209,7 +209,6 @@ bool Dataset::loadFromCSV(const char *fileName)
     }
 
     string line;
-    // Read the column names
     if (getline(file, line))
     {
         std::istringstream sstream(line);
@@ -224,7 +223,6 @@ bool Dataset::loadFromCSV(const char *fileName)
         return false;
     }
 
-    // Read the data
     while (getline(file, line))
     {
         std::istringstream sstream(line);
@@ -242,11 +240,9 @@ bool Dataset::loadFromCSV(const char *fileName)
     return true;
 }
 
-// Other methods inside the Dataset class:
 
 void Dataset::printHead(int nRows, int nCols) const
 {
-    // Check if nRows or nCols is less than 0
     if (nRows < 0 || nCols < 0)
         return;
 
@@ -257,7 +253,9 @@ void Dataset::printHead(int nRows, int nCols) const
             cout << " ";
         cout << columnNames->get(col);
     }
-    cout << endl;
+    if (data->length() > 0) {
+        cout << endl;
+    }
 
     // Print data rows
     for (int row = 0; row < nRows && row < data->length(); ++row)
@@ -269,7 +267,9 @@ void Dataset::printHead(int nRows, int nCols) const
                 cout << " ";
             cout << rowData->get(col);
         }
-        cout << endl;
+        if (row < nRows - 1 && row < data->length() - 1) {
+            cout << endl;
+        }
     }
 }
 
@@ -281,23 +281,21 @@ void Dataset::printTail(int nRows, int nCols) const
     int totalRows = data->length();
     int totalCols = columnNames->length();
 
-    // If nRows or nCols are greater than dataset size, adjust them accordingly
     nRows = min(nRows, totalRows);
     nCols = min(nCols, totalCols);
 
-    // Calculate the starting row index for printing
     int startRow = max(0, totalRows - nRows);
 
-    // Print column names
     for (int col = max(0, totalCols - nCols); col < totalCols; ++col)
     {
         cout << columnNames->get(col);
         if (col < totalCols - 1)
             cout << " ";
     }
-    cout << endl;
+    if (totalRows > 0) {
+        cout << endl;
+    }
 
-    // Print data rows
     for (int row = startRow; row < totalRows; ++row)
     {
         List<int> *rowData = data->get(row);
@@ -307,7 +305,9 @@ void Dataset::printTail(int nRows, int nCols) const
             if (col < rowData->length() - 1)
                 cout << " ";
         }
-        cout << endl;
+        if (row < totalRows - 1) {
+            cout << endl;
+        }
     }
 }
 
@@ -370,27 +370,26 @@ bool Dataset::drop(int axis, int index, string columns)
 
 Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) const
 {
-    // Adjust endRow and endCol to the length of the dataset if they are negative
-    endRow = (endRow == -1) ? data->length() : endRow;
-    endCol = (endCol == -1) ? (data->length() > 0 ? data->get(0)->length() : 0) : endCol;
+    endRow = (endRow == -1) ? data->length() - 1 : endRow;
+    endCol = (endCol == -1) ? (data->length() > 0 ? data->get(0)->length() - 1 : 0) : endCol;
 
-    // Check if the specified ranges are within the valid range of the dataset dimensions
-    if (startRow < 0 || startCol < 0 || endRow > data->length() || endCol > (data->length() > 0 ? data->get(0)->length() : 0))
+    if (startRow < 0 || startCol < 0 || endRow >= data->length() || endCol >= (data->length() > 0 ? data->get(0)->length() : 0))
     {
-        throw std::out_of_range("Specified range is out of the dataset dimensions");
+        cout << "Specified range is out of the dataset dimensions" << endl;
+        return Dataset();
     }
 
     Dataset extractedDataset;
-    for (int col = startCol; col < endCol && col < columnNames->length(); ++col)
+    for (int col = startCol; col <= endCol && col < columnNames->length(); ++col)
     {
         extractedDataset.columnNames->push_back(columnNames->get(col));
     }
 
-    for (int row = startRow; row < endRow && row < data->length(); ++row)
+    for (int row = startRow; row <= endRow && row < data->length(); ++row)
     {
         List<int> *rowData = data->get(row);
         List<int> *extractedRow = new DynamicArrayList<int>();
-        for (int col = startCol; col < endCol && col < rowData->length(); ++col)
+        for (int col = startCol; col <= endCol && col < rowData->length(); ++col)
         {
             extractedRow->push_back(rowData->get(col));
         }
@@ -400,13 +399,12 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
     return extractedDataset;
 }
 
+
 int Dataset::length() const
 {
     return data->length();
 }
 
-// Returns the number of features (columns) in each item
-// Assuming all rows have the same number of columns
 int Dataset::width() const
 {
     if (length() > 0)
@@ -416,16 +414,15 @@ int Dataset::width() const
     return 0;
 }
 
-// Returns the pointer to the data array at the given index (row)
 List<int> *Dataset::get(int index) const
 {
-    return data->get(index);
+    List<int> * row = data->get(index);
+    return row;
 }
 
-// Adds a new row to the dataset with the given data and size
 void Dataset::add(List<int> *rowData)
 {
-    List<int> *newRow = new DynamicArrayList<int>(); // Assuming DynamicArrayList is a concrete implementation of List
+    List<int> *newRow = new DynamicArrayList<int>(); 
     for (int i = 0; i < rowData->length(); ++i)
     {
         newRow->push_back(rowData->get(i));
@@ -433,7 +430,6 @@ void Dataset::add(List<int> *rowData)
     data->push_back(newRow);
 }
 
-// Adds a new label to the dataset (for y_train and y_test)
 void Dataset::add(int label)
 {
     List<int> *newRow = new DynamicArrayList<int>();
@@ -441,7 +437,6 @@ void Dataset::add(int label)
     data->push_back(newRow);
 }
 
-// Returns the maximum label value; used to create the count array for label frequencies
 int Dataset::max_label() const
 {
     int maxLabel = -1;
@@ -456,6 +451,11 @@ int Dataset::max_label() const
     return maxLabel;
 }
 
+List<List<int>*>* Dataset::getData() const {
+    return data;
+}
+
+
 double euclideanDistance(const List<int> *a, const List<int> *b, int size)
 {
     double distance = 0.0;
@@ -466,6 +466,30 @@ double euclideanDistance(const List<int> *a, const List<int> *b, int size)
     }
     return std::sqrt(distance);
 }
+
+
+void quickSort(double *distances, int *indices, int left, int right) {
+    if (left >= right) return;
+    
+    double pivot = distances[(left + right) / 2];
+    int i = left;
+    int j = right;
+    
+    while (i <= j) {
+        while (distances[i] < pivot) i++;
+        while (distances[j] > pivot) j--;
+        if (i <= j) {
+            std::swap(distances[i], distances[j]);
+            std::swap(indices[i], indices[j]);
+            i++;
+            j--;
+        }
+    }
+    
+    quickSort(distances, indices, left, j);
+    quickSort(distances, indices, i, right);
+}
+
 
 kNN::kNN(int k) : k(k) {}
 
@@ -478,7 +502,6 @@ void kNN::fit(const Dataset &X_train, const Dataset &y_train)
 Dataset kNN::predict(const Dataset &X_test)
 {
     Dataset predictions;
-
     for (int i = 0; i < X_test.length(); ++i)
     {
         double *distances = new double[X_train.length()];
@@ -490,26 +513,15 @@ Dataset kNN::predict(const Dataset &X_test)
             indices[j] = j;
         }
 
-        // Simple selection sort to find the k smallest distances
-        for (int j = 0; j < k; ++j)
-        {
-            int minIndex = j;
-            for (int l = j + 1; l < X_train.length(); ++l)
-            {
-                if (distances[l] < distances[minIndex])
-                {
-                    minIndex = l;
-                }
-            }
-            swap(distances[j], distances[minIndex]);
-            swap(indices[j], indices[minIndex]);
-        }
+        quickSort(distances, indices, 0, X_train.length() - 1);
+
 
         // Majority voting for the nearest k neighbors
-        int *count = new int[y_train.max_label() + 1](); // Assuming labels are 0-indexed
+        int *count = new int[y_train.max_label() + 1](); 
         for (int j = 0; j < k; ++j)
         {
-            int label = y_train.get(indices[j])->get(0);
+            List<int> * row = y_train.get(indices[j]);
+            int label = row->get(0);
             count[label]++;
         }
 
@@ -552,14 +564,16 @@ void train_test_split(Dataset &X, Dataset &y, double test_size,
                       Dataset &X_train, Dataset &X_test, Dataset &y_train, Dataset &y_test)
 {
     int totalRows = X.length();
-    int trainRows = static_cast<int>((1 - test_size) * totalRows);
-    int testRows = totalRows - trainRows;
+    int testRows = static_cast<int>(ceil(test_size * totalRows));
+    int trainRows = totalRows - testRows;
 
     for (int i = 0; i < trainRows; ++i)
     {
         X_train.add(X.get(i));
         y_train.add(y.get(i));
     }
+
+
     for (int i = trainRows; i < totalRows; ++i)
     {
         X_test.add(X.get(i));

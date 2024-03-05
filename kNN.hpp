@@ -43,6 +43,7 @@ public:
     void add(List<int>* rowData);
     void add(int label);
     int max_label() const;
+    List<List<int>*>* getData() const;
 
 };
 
