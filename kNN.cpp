@@ -25,7 +25,7 @@ public:
         clear();
     }
 
-    void push_back(const T& value) override {
+    void push_back(T value) override {
         if (!head) {
             head = new Node<T>(value);
         } else {
@@ -38,14 +38,14 @@ public:
         ++size;
     }
 
-    void push_front(const T& value) override {
+    void push_front(T value) override {
         Node<T>* newNode = new Node<T>(value);
         newNode->next = head;
         head = newNode;
         ++size;
     }
 
-    void insert(int index, const T& value) override {
+    void insert(int index, T value) override {
         if (index < 0 || index > static_cast<int>(size)) {
             cout << "Index out of range";
             return;
@@ -150,9 +150,10 @@ public:
 
 
 
+/*
 
 template <typename T>
-class DynamicArrayList : public List<T>
+class DynamicLinkedList : public List<T>
 {
 private:
     T *array;
@@ -172,9 +173,9 @@ private:
     }
 
 public:
-    DynamicArrayList() : array(nullptr), capacity(0), size(0) {}
+    DynamicLinkedList() : array(nullptr), capacity(0), size(0) {}
 
-    virtual ~DynamicArrayList() override
+    virtual ~DynamicLinkedList() override
     {
         delete[] array;
     }
@@ -275,6 +276,8 @@ public:
     }
 };
 
+*/
+
 void Dataset::clearData()
 {
     if (data)
@@ -288,7 +291,7 @@ void Dataset::clearData()
     }
 }
 
-Dataset::Dataset() : data(new DynamicArrayList<List<int> *>()), columnNames(new DynamicArrayList<string>()) {}
+Dataset::Dataset() : data(new DynamicLinkedList<List<int> *>()), columnNames(new DynamicLinkedList<string>()) {}
 
 Dataset::~Dataset()
 {
@@ -296,11 +299,11 @@ Dataset::~Dataset()
     delete columnNames;
 }
 
-Dataset::Dataset(const Dataset &other) : data(new DynamicArrayList<List<int> *>()), columnNames(new DynamicArrayList<string>())
+Dataset::Dataset(const Dataset &other) : data(new DynamicLinkedList<List<int> *>()), columnNames(new DynamicLinkedList<string>())
 {
     for (int i = 0; i < other.data->length(); ++i)
     {
-        List<int> *newRow = new DynamicArrayList<int>();
+        List<int> *newRow = new DynamicLinkedList<int>();
         for (int j = 0; j < other.data->get(i)->length(); ++j)
         {
             newRow->push_back(other.data->get(i)->get(j));
@@ -320,13 +323,13 @@ Dataset &Dataset::operator=(const Dataset &other)
     if (this != &other)
     {
         // Create new data structures as a local copy.
-        List<List<int> *> *newData = new DynamicArrayList<List<int> *>();
-        List<string> *newColumnNames = new DynamicArrayList<string>();
+        List<List<int> *> *newData = new DynamicLinkedList<List<int> *>();
+        List<string> *newColumnNames = new DynamicLinkedList<string>();
 
         // Attempt to copy the data.
         for (int i = 0; i < other.data->length(); ++i)
         {
-            List<int> *newRow = new DynamicArrayList<int>();
+            List<int> *newRow = new DynamicLinkedList<int>();
             for (int j = 0; j < other.data->get(i)->length(); ++j)
             {
                 newRow->push_back(other.data->get(i)->get(j));
@@ -375,7 +378,7 @@ bool Dataset::loadFromCSV(const char *fileName)
     {
         std::istringstream sstream(line);
         string cell;
-        List<int> *row = new DynamicArrayList<int>();
+        List<int> *row = new DynamicLinkedList<int>();
 
         while (getline(sstream, cell, ','))
         {
@@ -536,7 +539,7 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
     for (int row = startRow; row <= endRow && row < data->length(); ++row)
     {
         List<int> *rowData = data->get(row);
-        List<int> *extractedRow = new DynamicArrayList<int>();
+        List<int> *extractedRow = new DynamicLinkedList<int>();
         for (int col = startCol; col <= endCol && col < rowData->length(); ++col)
         {
             extractedRow->push_back(rowData->get(col));
@@ -570,7 +573,7 @@ List<int> *Dataset::get(int index) const
 
 void Dataset::add(List<int> *rowData)
 {
-    List<int> *newRow = new DynamicArrayList<int>(); 
+    List<int> *newRow = new DynamicLinkedList<int>(); 
     for (int i = 0; i < rowData->length(); ++i)
     {
         newRow->push_back(rowData->get(i));
@@ -580,7 +583,7 @@ void Dataset::add(List<int> *rowData)
 
 void Dataset::add(int label)
 {
-    List<int> *newRow = new DynamicArrayList<int>();
+    List<int> *newRow = new DynamicLinkedList<int>();
     newRow->push_back(label);
     data->push_back(newRow);
 }
