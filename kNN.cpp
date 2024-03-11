@@ -3,6 +3,154 @@
 /* TODO: You can implement methods, functions that support your data structures here.
  * */
 
+
+template <typename T>
+struct Node {
+    T data;
+    Node* next;
+
+    Node(const T& value) : data(value), next(nullptr) {}
+};
+
+template <typename T>
+class DynamicLinkedList : public List<T> {
+private:
+    Node<T>* head;
+    size_t size;
+
+public:
+    DynamicLinkedList() : head(nullptr), size(0) {}
+
+    ~DynamicLinkedList() override {
+        clear();
+    }
+
+    void push_back(const T& value) override {
+        if (!head) {
+            head = new Node<T>(value);
+        } else {
+            Node<T>* current = head;
+            while (current->next) {
+                current = current->next;
+            }
+            current->next = new Node<T>(value);
+        }
+        ++size;
+    }
+
+    void push_front(const T& value) override {
+        Node<T>* newNode = new Node<T>(value);
+        newNode->next = head;
+        head = newNode;
+        ++size;
+    }
+
+    void insert(int index, const T& value) override {
+        if (index < 0 || index > static_cast<int>(size)) {
+            cout << "Index out of range";
+            return;
+        }
+
+        if (index == 0) {
+            push_front(value);
+        } else if (index == size) {
+            push_back(value);
+        } else {
+            Node<T>* current = head;
+            for (int i = 0; i < index - 1; ++i) {
+                current = current->next;
+            }
+            Node<T>* newNode = new Node<T>(value);
+            newNode->next = current->next;
+            current->next = newNode;
+            ++size;
+        }
+    }
+
+    void remove(int index) override {
+        if (index < 0 || index >= static_cast<int>(size)) {
+            cout << "Index out of range";
+            return;
+        }
+
+        Node<T>* temp;
+        if (index == 0) {
+            temp = head;
+            head = head->next;
+        } else {
+            Node<T>* current = head;
+            for (int i = 0; i < index - 1; ++i) {
+                current = current->next;
+            }
+            temp = current->next;
+            current->next = temp->next;
+        }
+        delete temp;
+        --size;
+    }
+
+    T& get(int index) const override {
+        if (index < 0 || index >= static_cast<int>(size)) {
+            cout << "Index out of range";
+            // Returning a reference to a temporary is bad practice,
+            // but this is just a placeholder.
+            return head->data;
+        }
+
+        Node<T>* current = head;
+        for (int i = 0; i < index; ++i) {
+            current = current->next;
+        }
+        return current->data;
+    }
+
+    int length() const override {
+        return static_cast<int>(size);
+    }
+
+    void clear() override {
+        Node<T>* current = head;
+        while (current) {
+            Node<T>* next = current->next;
+            delete current;
+            current = next;
+        }
+        head = nullptr;
+        size = 0;
+    }
+
+    void print() const override {
+        Node<T>* current = head;
+        while (current) {
+            cout << current->data << " ";
+            current = current->next;
+        }
+        cout << endl;
+    }
+
+    void reverse() override {
+        if (!head || !head->next) {
+            return;
+        }
+
+        Node<T>* prev = nullptr;
+        Node<T>* current = head;
+        Node<T>* nextNode;
+
+        while (current) {
+            nextNode = current->next;
+            current->next = prev;
+            prev = current;
+            current = nextNode;
+        }
+
+        head = prev;
+    }
+};
+
+
+
+
 template <typename T>
 class DynamicArrayList : public List<T>
 {
@@ -455,6 +603,17 @@ List<List<int>*>* Dataset::getData() const {
     return data;
 }
 
+void Dataset::addColumnNames(const List<string>& names) {
+    columnNames->clear();
+    for (int i = 0; i < names.length(); ++i) {
+        columnNames->push_back(names.get(i));
+    }
+}
+
+List<string>* Dataset::getColumnNames() const {
+    return columnNames;
+}
+
 
 double euclideanDistance(const List<int> *a, const List<int> *b, int size)
 {
@@ -502,6 +661,7 @@ void kNN::fit(const Dataset &X_train, const Dataset &y_train)
 Dataset kNN::predict(const Dataset &X_test)
 {
     Dataset predictions;
+    predictions.addColumnNames(*y_train.getColumnNames());
     for (int i = 0; i < X_test.length(); ++i)
     {
         double *distances = new double[X_train.length()];
@@ -566,6 +726,17 @@ void train_test_split(Dataset &X, Dataset &y, double test_size,
     int totalRows = X.length();
     int testRows = static_cast<int>(ceil(test_size * totalRows));
     int trainRows = totalRows - testRows;
+
+    List<string>* X_columnNames = X.getColumnNames();
+    List<string>* y_columnNames = y.getColumnNames();
+
+    // Add column names to X_train and X_test
+    X_train.addColumnNames(*X_columnNames);
+    X_test.addColumnNames(*X_columnNames);
+
+    // Add column names to y_train and y_test
+    y_train.addColumnNames(*y_columnNames);
+    y_test.addColumnNames(*y_columnNames);
 
     for (int i = 0; i < trainRows; ++i)
     {

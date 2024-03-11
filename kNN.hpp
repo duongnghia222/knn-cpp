@@ -44,6 +44,8 @@ public:
     void add(int label);
     int max_label() const;
     List<List<int>*>* getData() const;
+    void addColumnNames(const List<string>& names);
+    List<string>* getColumnNames() const;
 
 };
 
